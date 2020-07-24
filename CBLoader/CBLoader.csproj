@@ -150,6 +150,10 @@
       <Project>{fdfc1237-143f-4919-8318-4926901f4639}</Project>
       <Name>dnlib</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EmbeddedUI\EmbeddedUI.csproj">
+      <Project>{d0e0cb2b-3c15-47ea-bc89-190b5340bfaa}</Project>
+      <Name>EmbeddedUI</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Mono.Options\Mono.Options.csproj">
       <Project>{ab4cf537-0032-434e-8d92-5337e752e768}</Project>
       <Name>Mono.Options</Name>

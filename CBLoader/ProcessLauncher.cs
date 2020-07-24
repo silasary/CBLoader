@@ -8,7 +8,6 @@ using System.IO;
 using System.Reflection;
 using System.Security;
 using System.Threading;
-using System.Windows;
 using System.Windows.Controls;
 
 namespace CBLoader
@@ -42,33 +41,51 @@ namespace CBLoader
                 Log.Debug($" - Found assembly at {path}");
                 return Assembly.LoadFrom(path);
             }
+            path = Path.Combine(Path.GetDirectoryName(myAssembly.Location), $"{name}.{extension}");
+            if (File.Exists(path))
+            {
+                Log.Debug($" - Found assembly at {path}");
+                return Assembly.LoadFrom(path);
+            }
             return null;
         }
+
+        Dictionary<string, Assembly> LoadedAssemblies = new Dictionary<string, Assembly>();
+
         private Assembly ResolveAssembly(Object sender, ResolveEventArgs ev)
         {
             Log.Debug($"Handling ResolveAssembly event for {ev.Name}");
-            
-            if (ev.Name == myAssembly.FullName)
-            {
-                Log.Debug(" - Using callback assembly");
-                return myAssembly;
-            }
-
             string name = ev.Name.Split(',')[0].Trim();
-
-            if (patchedAssemblies.ContainsKey(name))
+            Assembly lookup()
             {
-                Log.Debug(" - Using patched assembly");
-                return Assembly.Load(patchedAssemblies[name]);
+                if (ev.Name == myAssembly.FullName)
+                {
+                    Log.Debug(" - Using callback assembly");
+                    return myAssembly;
+                }
+
+
+                if (patchedAssemblies.ContainsKey(name))
+                {
+                    Log.Debug(" - Using patched assembly");
+                    return Assembly.Load(patchedAssemblies[name]);
+                }
+
+                var dll = CheckExtension(name, "dll");
+                if (dll != null) return dll;
+
+                var exe = CheckExtension(name, "exe");
+                if (exe != null) return exe;
+
+                return null;
+            }
+            if (LoadedAssemblies.ContainsKey(name))
+            {
+                Log.Debug(" - Using preloaded assembly");
+                return LoadedAssemblies[name];
             }
 
-            var dll = CheckExtension(name, "dll");
-            if (dll != null) return dll;
-
-            var exe = CheckExtension(name, "exe");
-            if (exe != null) return exe;
-
-            return null;
+            return LoadedAssemblies[name] = lookup();
         }
     }
 
@@ -286,8 +303,23 @@ namespace CBLoader
                     break;
                 }
             }
-   
         }
+
+#if EUI
+        private static void InjectUI(AssemblyDef assembly)
+        {
+            var imp = new Importer(assembly.ManifestModule);
+            var type = assembly.ManifestModule.Find("Character_Builder.App", false);
+
+            var method = type.FindMethod("App_Startup");
+            method.Body.Instructions.InsertRange(4, new Instruction[] {
+                OpCodes.Ldarg_0.ToInstruction(),
+                OpCodes.Ldarg_2.ToInstruction(),
+                OpCodes.Call.ToInstruction(imp.Import(typeof(EmbeddedUI.EmbeddedUI).GetMethod("App_Startup")))
+            });
+        }
+
+#endif
 
         private static void PatchApplication(TargetDomainCallback callback, string cbDirectory, string changelog)
         {
@@ -305,7 +337,10 @@ namespace CBLoader
 
             Log.Debug("   - Fixing D20Workspace error.");
             ReplaceInitializationFailure(assembly);
-
+#if EUI
+            Log.Debug("   - Install Enhanced UI");
+            InjectUI(assembly);
+#endif
             AddOverride(callback, assembly, true);
         }
 
@@ -367,6 +402,7 @@ namespace CBLoader
             appDomain.ClearPrivatePath();
             appDomain.AppendPrivatePath("<|>");
 #pragma warning restore CS0618
+
 
             callback.Init(options.CBPath, Log.RemoteReceiver, Path.GetFullPath(redirectPath), Path.GetFullPath(changelog));
 

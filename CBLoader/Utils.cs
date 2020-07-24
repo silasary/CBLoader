@@ -91,6 +91,7 @@ namespace CBLoader
         {
             if (!Utils.IS_WINDOWS) return;
             if (!IsInIndependentConsole) return;
+            if (Debugger.IsAttached) return;
 
             var console = GetConsoleWindow();
             if (console.ToInt64() == 0) return;

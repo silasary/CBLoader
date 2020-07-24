@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CBInstaller", "CBInstaller\CBInstaller.csproj", "{72135623-003C-44BB-B4CF-3168373AC4EE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmbeddedUI", "EmbeddedUI\EmbeddedUI.csproj", "{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -94,6 +96,22 @@ Global
 		{72135623-003C-44BB-B4CF-3168373AC4EE}.Release|x64.Build.0 = Release|Any CPU
 		{72135623-003C-44BB-B4CF-3168373AC4EE}.Release|x86.ActiveCfg = Release|Any CPU
 		{72135623-003C-44BB-B4CF-3168373AC4EE}.Release|x86.Build.0 = Release|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Debug|x64.Build.0 = Debug|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Debug|x86.Build.0 = Debug|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Release|x64.ActiveCfg = Release|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Release|x64.Build.0 = Release|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Release|x86.ActiveCfg = Release|Any CPU
+		{D0E0CB2B-3C15-47EA-BC89-190B5340BFAA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
