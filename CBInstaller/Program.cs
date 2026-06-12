@@ -21,6 +21,7 @@ namespace CBInstaller
     {
         static readonly string appdata = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CBLoader");
         static readonly string custom = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ddi", "CBLoader");
+        static readonly string progdir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CBLoader");
         private static Version installed;
 
         [STAThread]
@@ -42,7 +43,10 @@ namespace CBInstaller
             {
                 MessageBox.Show("Warning:  TLS 1.2 not available.  Installer may not work.");
             }
-            if (Directory.Exists(appdata) && File.Exists(Path.Combine(appdata, "CBLoader.exe")))
+            if (!Directory.Exists(appdata))
+                Directory.CreateDirectory(appdata);
+            Environment.CurrentDirectory = appdata;
+            if (File.Exists(Path.Combine(appdata, "CBLoader.exe")) || File.Exists(Path.Combine(progdir, "CBLoader.exe")))
             {
                 string logfile = Path.Combine(appdata, "CBLoader.log");
                 if (File.Exists(logfile))
@@ -70,9 +74,9 @@ namespace CBInstaller
                     File.Copy(index, path);
             }
             Environment.CurrentDirectory = appdata;
-            Process.Start(new ProcessStartInfo(Path.Combine(appdata, "CBLoader.exe")));
+            Process.Start(new ProcessStartInfo(Path.Combine(progdir, "CBLoader.exe")));
 
-            var installPath = Path.Combine(appdata, "CBInstaller.exe");
+            var installPath = Path.Combine(progdir, "CBInstaller.exe");
             if (Assembly.GetExecutingAssembly().Location != installPath)
             {
                 InstallSelf(installPath);
@@ -89,18 +93,19 @@ namespace CBInstaller
 
         private static void Download(Utils.ReleaseInfo update)
         {
+            Environment.CurrentDirectory = appdata;
             var wc = new WebClient();
-            string zip = Path.GetFileName(update.DownloadUrl);
+            string zip = Path.Combine(appdata, Path.GetFileName(update.DownloadUrl));
             wc.DownloadFile(update.DownloadUrl, zip);
             var security = new DirectorySecurity();
-            Directory.CreateDirectory(appdata);
-            Environment.CurrentDirectory = appdata;
+            Directory.CreateDirectory(progdir);
+            Environment.CurrentDirectory = progdir;
 
             using (var zipfile = ZipFile.OpenRead(zip))
             {
                 foreach (var e in zipfile.Entries)
                 {
-                    var path = Path.Combine(appdata, e.FullName);
+                    var path = Path.Combine(progdir, e.FullName);
                     if (e.FullName.EndsWith("/"))
                         Directory.CreateDirectory(path);
                     else
@@ -134,7 +139,7 @@ namespace CBInstaller
             IShellLink link = (IShellLink)new ShellLink();
             link.SetDescription($"Character Builder with CBLoader {installed?.ToString() ?? ""}");
             link.SetPath(self);
-            link.SetIconLocation(Path.Combine(appdata, "CBLoader.exe"), 0);
+            link.SetIconLocation(Path.Combine(progdir, "CBLoader.exe"), 0);
 
             IPersistFile file = (IPersistFile)link;
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);

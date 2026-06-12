@@ -18,7 +18,9 @@ namespace CBInstaller
     /// </summary>
     static class LCB
     {
-        public static string ProgramsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Character Builder");
+        private const string Oct2010Url = "https://archive.org/download/ddi_charbuilder/Character_Builder_Update_Oct_2010.exe";
+        private const string ddiSetupUrl = "https://archive.org/download/ddi_charbuilder/ddisetup.exe";
+        public static string ProgramsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CharacterBuilder");
 
         internal static void MaybeUninstall()
         {
@@ -45,8 +47,9 @@ namespace CBInstaller
             {
                 try
                 {
+                    Console.WriteLine($"Downloading {ddiSetupUrl}");
                     var wc = new WebClient();
-                    wc.DownloadFile("https://archive.org/download/ddi_charbuilder/ddisetup.exe", ddiSetup);
+                    wc.DownloadFile(ddiSetupUrl, ddiSetup);
                 }
                 catch (WebException c)
                 {
@@ -73,8 +76,9 @@ namespace CBInstaller
             {
                 try
                 {
+                    Console.WriteLine($"Downloading {Oct2010Url}");
                     var wc = new WebClient();
-                    wc.DownloadFile("https://archive.org/download/ddi_charbuilder/Character_Builder_Update_Oct_2010.exe", ddiSetup);
+                    wc.DownloadFile(Oct2010Url, update);
                 }
                 catch (WebException c)
                 {
@@ -94,6 +98,9 @@ namespace CBInstaller
                 Console.WriteLine($"Can't find {update}, aborting");
                 Environment.Exit(2);
             }
+
+            if (ProgramsFolder.Contains(" ")) // We can't have spaces in the path.
+                ProgramsFolder = "C:\\CharacterBuilder";
 
             Run(new ProcessStartInfo(ddiSetup, $"-v\"INSTALLDIR={ProgramsFolder} -q\""));
 
