@@ -140,6 +140,22 @@ namespace CBLoader
                     return $"<{tableId}>";
             }
         }
+
+        public static unsafe string RulesElementUri(object ws, object* elem)
+        {
+            var id = (string)ws.GetType().GetMethod("RulesElementID").Invoke(ws, new object[] { new IntPtr(elem) });
+            if (id == null)
+                return null;
+            if (id.StartsWith("ID_FMP_"))
+            {
+                var subname = id.Substring(7);
+                var last_underscore = subname.LastIndexOf('_');
+                var type = subname.Substring(0, last_underscore).ToLower();
+                var number = subname.Substring(last_underscore + 1);
+                return $"https://iws.mx/dnd/?view={type}{number}";
+            }
+            return null;
+        }
     }
 
     internal static class ProcessLauncher
@@ -284,8 +300,15 @@ namespace CBLoader
             {
                 // Remove Compendium link URI
                 var method = type.FindMethod("AddUri");
-                method.Body = new CilBody();
-                method.Body.Instructions.Add(OpCodes.Ret.ToInstruction());
+                for (int i = 0; i < method.Body.Instructions.Count; i++)
+                {
+                    if (method.Body.Instructions[i].OpCode != OpCodes.Callvirt) continue;
+                    method.Body.Instructions[i] = OpCodes.Call.ToInstruction(imp.Import(typeof(Callbacks).GetMethod("RulesElementUri")));
+                    break;
+                }
+
+                //method.Body = new CilBody();
+                //method.Body.Instructions.Add(OpCodes.Ret.ToInstruction());
             }
 
             // Probably only want to do this for broken links
@@ -293,10 +316,10 @@ namespace CBLoader
                 // Remove source link URI
                 var method = type.FindMethod("AddSource");
 
-                for (int i=0; i < method.Body.Instructions.Count; i++)
+                for (int i = 0; i < method.Body.Instructions.Count; i++)
                 {
                     if (method.Body.Instructions[i].OpCode != OpCodes.Callvirt) continue;
-                    var target = (IMethod) method.Body.Instructions[i].Operand;
+                    var target = (IMethod)method.Body.Instructions[i].Operand;
                     if (target.FullName != FIND_RULES_ELEMENT) continue;
 
                     method.Body.Instructions.RemoveAt(i);
