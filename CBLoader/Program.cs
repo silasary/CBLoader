@@ -1,9 +1,11 @@
 ﻿using Mono.Options;
+using SharpRaven;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
@@ -115,6 +117,8 @@ namespace CBLoader
         public bool SetFileAssociations = false;
         public bool DumpTemporaryFiles = false;
         public bool CreateUpdateIndexFiles = false;
+
+        public bool Oct2010 { get; internal set; }
 
         public void AddPath(string dir, bool update = true)
         {
@@ -234,17 +238,25 @@ namespace CBLoader
 
     internal static class Program
     {
-        public static string Version;
+        private static readonly Version Version;
+        public static readonly string VersionString;
+        public static readonly RavenClient sentry = new RavenClient("https://cbd66ca450dbb2b29fff22da66f51993@o4506160097656832.ingest.sentry.io/4506160098902016");
+        public static bool UpdateAvailable = false;
         static Program()
         {
-            var ver = typeof(Program).Assembly.GetName().Version;
-            Version = $"{ver.Major}.{ver.Minor}.{ver.Build}";
+            Version = new Version(typeof(Program).Assembly.GetCustomAttributes(typeof(AssemblyFileVersionAttribute), true).OfType<AssemblyFileVersionAttribute>().First().Version);
+            VersionString = $"{Version.Major}.{Version.Minor}.{Version.Build}";
 #if DEBUG
-            Version += " Beta";
+            VersionString += " Beta";
+            //AppDomain.CurrentDomain.UnhandledException += Sentry_UnhandledException;
 #endif
-
         }
-        
+
+        private static void Sentry_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            sentry.Capture(new SharpRaven.Data.SentryEvent(e.ExceptionObject as Exception));
+        }
+
         private static void SetUniqueString(ref string target, string flag, string value)
         {
             if (target != null)
@@ -397,6 +409,7 @@ namespace CBLoader
             {
                 Solve2009Version(options, ref cryptoInfo);
             }
+            options.Oct2010 = cryptoInfo.expectedDemoHash == ParsedD20RulesEngine.DemoHashOct2010;
 
             var fileManager = new PartManager(options, cryptoInfo);
 
@@ -425,13 +438,22 @@ namespace CBLoader
         [LoaderOptimization(LoaderOptimization.MultiDomain)]
         internal static void Main(string[] args)
         {
-            Utils.ConfigureTLS12();
-            Console.WriteLine($"CBLoader version {Version}");
-            Utils.CheckForUpdates(typeof(Program).Assembly.GetName().Version);
-            Console.WriteLine();
+            Console.WriteLine($"CBLoader version {VersionString}");
             Log.InitLogging();
-            Log.Trace($"CBLoader version {Version}");
+            Log.Trace($"CBLoader version {VersionString}");
+            Log.Trace("Running on " + Environment.OSVersion.VersionString);
             Log.Trace();
+            try
+            {
+                Utils.ConfigureTLS12();
+            }
+            catch (NotSupportedException e)
+            {
+                Log.Error("TLS 1.2 not available.", e);
+            }
+            var update = Utils.CheckForUpdates(Version);
+            if (update != null) UpdateAvailable = true;
+            Console.WriteLine();
 
             try
             {

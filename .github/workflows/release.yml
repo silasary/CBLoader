@@ -7,7 +7,7 @@ on:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 jobs:
   publish:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
     - name: Create Release
       id: create_release
@@ -19,15 +19,15 @@ jobs:
         release_name: CBLoader ${{ github.ref }}
         draft: false
         prerelease: false
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v6
       with:
         submodules: true
     - name: Setup Nuget.exe
-      uses: warrenbuckley/Setup-Nuget@v1
+      uses: NuGet/setup-nuget@v1
     - name: Restore packages
       run: nuget restore CBLoader.sln
     - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
+      uses: microsoft/setup-msbuild@v1.0.2
     - name: Build with MSBuild
       run: msbuild -p:Configuration=Release
     - run: 7z a Release.zip ./*

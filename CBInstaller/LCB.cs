@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
@@ -17,6 +18,10 @@ namespace CBInstaller
     /// </summary>
     static class LCB
     {
+        private const string Oct2010Url = "https://archive.org/download/ddi_charbuilder/Character_Builder_Update_Oct_2010.exe";
+        private const string ddiSetupUrl = "https://archive.org/download/ddi_charbuilder/ddisetup.exe";
+        public static string ProgramsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CharacterBuilder");
+
         internal static void MaybeUninstall()
         {
             using (var md5 = MD5.Create())
@@ -40,6 +45,21 @@ namespace CBInstaller
                 ddiSetup = "ddisetup.exe";
             if (!File.Exists(ddiSetup))
             {
+                try
+                {
+                    Console.WriteLine($"Downloading {ddiSetupUrl}");
+                    var wc = new WebClient();
+                    wc.DownloadFile(ddiSetupUrl, ddiSetup);
+                }
+                catch (WebException c)
+                {
+                    MessageBox.Show(c.Message);
+                    if (File.Exists(ddiSetup))
+                        File.Delete(ddiSetup);
+                }
+            }
+            if (!File.Exists(ddiSetup))
+            {
                 var openFileDialog = new OpenFileDialog { Filter = "ddisetup2009April.exe|ddisetup2009April.exe;ddisetup.exe" };
                 openFileDialog.ShowDialog();
                 ddiSetup = openFileDialog.FileName;
@@ -54,6 +74,21 @@ namespace CBInstaller
             var update = "Character_Builder_Update_Oct_2010.exe";
             if (!File.Exists(update))
             {
+                try
+                {
+                    Console.WriteLine($"Downloading {Oct2010Url}");
+                    var wc = new WebClient();
+                    wc.DownloadFile(Oct2010Url, update);
+                }
+                catch (WebException c)
+                {
+                    MessageBox.Show(c.Message);
+                    if (File.Exists(update))
+                        File.Delete(update);
+                }
+            }
+            if (!File.Exists(update))
+            {
                 var openFileDialog = new OpenFileDialog { Filter = "Character_Builder_Update_Oct_2010.exe|Character_Builder_Update_Oct_2010.exe" };
                 openFileDialog.ShowDialog();
                 update = openFileDialog.FileName;
@@ -64,7 +99,10 @@ namespace CBInstaller
                 Environment.Exit(2);
             }
 
-            Run(new ProcessStartInfo(ddiSetup, "-v\"INSTALLDIR=C:\\CharacterBuilder -q\""));
+            if (ProgramsFolder.Contains(" ")) // We can't have spaces in the path.
+                ProgramsFolder = "C:\\CharacterBuilder";
+
+            Run(new ProcessStartInfo(ddiSetup, $"-v\"INSTALLDIR={ProgramsFolder} -q\""));
 
             var cbpath = Utils.GetInstallPath();
             Console.WriteLine($"Installed to {cbpath}");

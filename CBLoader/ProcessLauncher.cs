@@ -15,18 +15,21 @@ namespace CBLoader
     internal sealed class TargetDomainCallback : PersistantRemoteObject
     {
         private string cbDirectory;
+        private string loaderDirectory;
         private readonly Dictionary<string, byte[]> patchedAssemblies = new Dictionary<string, byte[]>();
 
         private readonly Assembly myAssembly = Assembly.GetAssembly(typeof(TargetDomainCallback));
 
-        internal void Init(string cbDirectory, LogRemoteReceiver logRemote, string redirectPath, string callback)
+        internal void Init(string cbDirectory, LogRemoteReceiver logRemote, string redirectPath, string callback, bool oct2010)
         {
             this.cbDirectory = cbDirectory;
+            this.loaderDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             Log.InitLoggingForChildDomain(logRemote);
             AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
 
             Callbacks.redirectDataPath = redirectPath;
             Callbacks.callbackPath = callback;
+            Callbacks.isOct2010 = oct2010;
         }
         internal void AddOverride(string name, byte[] data)
         {
@@ -41,7 +44,7 @@ namespace CBLoader
                 Log.Debug($" - Found assembly at {path}");
                 return Assembly.LoadFrom(path);
             }
-            path = Path.Combine(Path.GetDirectoryName(myAssembly.Location), $"{name}.{extension}");
+            path = Path.Combine(loaderDirectory, $"{name}.{extension}");
             if (File.Exists(path))
             {
                 Log.Debug($" - Found assembly at {path}");
@@ -93,6 +96,7 @@ namespace CBLoader
     {
         internal static String redirectDataPath;
         internal static String callbackPath;
+        internal static bool isOct2010;
 
         public static String DoRedirectPath(String streamPath)
         {
@@ -128,7 +132,10 @@ namespace CBLoader
             switch (tableId)
             {
                 case 6225: // Contact Customer Support.
-                    return "There was an error loading combined.dnd40.  This usually means there's a malformed part file.";
+                    if (isOct2010)
+                        return "There was an error loading combined.dnd40.  This usually means there's a malformed part file.";
+                    else
+                        return "There was an error loading combined.dnd40.  You should install the October 2010 patch.";
                 default:
                     return $"<{tableId}>";
             }
@@ -404,7 +411,7 @@ namespace CBLoader
 #pragma warning restore CS0618
 
 
-            callback.Init(options.CBPath, Log.RemoteReceiver, Path.GetFullPath(redirectPath), Path.GetFullPath(changelog));
+            callback.Init(options.CBPath, Log.RemoteReceiver, Path.GetFullPath(redirectPath), Path.GetFullPath(changelog), options.Oct2010);
 
             Log.Debug(" - Patching CharacterBuilder.exe");
             PatchApplication(callback, options.CBPath, changelog);
